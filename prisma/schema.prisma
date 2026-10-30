@@ -1,0 +1,200 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                String    @id @default(uuid())
+  name              String
+  email             String    @unique
+  passwordHash      String
+  cpf               String?
+  phone             String?
+  role              String    @default("CUSTOMER")
+  termsAcceptedAt   DateTime  @default(now())
+  privacyAcceptedAt DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  addresses         Address[]
+  orders            Order[]
+
+  @@map("users")
+}
+
+model Address {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cep        String
+  street     String
+  number     String
+  complement String?
+  district   String
+  city       String
+  state      String
+  isDefault  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("addresses")
+}
+
+model Product {
+  id              String      @id @default(uuid())
+  tinyId          String?     @unique
+  sku             String?     @unique
+  gtin            String?
+  slug            String      @unique
+  name            String
+  description     String?     @db.Text
+  shortDesc       String?
+  category        String      @default("Geral")
+  brand           String      @default("Canal Distribuidora")
+  price           Float
+  oldPrice        Float?
+  discountPercent Int         @default(0)
+  stock           Int         @default(0)
+  reservedStock   Int         @default(0)
+  stockSyncedAt   DateTime?
+  detailsSyncedAt DateTime?
+  freteGratis     Boolean     @default(false)
+  badge           String?
+  rating          Float       @default(4.9)
+  reviewsCount    Int         @default(120)
+  image           String
+  gallery         String[]
+  active          Boolean     @default(true)
+  weight          Float?
+  height          Float?
+  width           Float?
+  length          Float?
+  meliLink        String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  orderItems      OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  orderNumber    String      @unique
+  checkoutKey    String?     @unique
+  checkoutFingerprint String?
+  invoiceUrl String?
+  paymentCreateState String @default("NOT_STARTED")
+  paymentCreateAttemptedAt DateTime?
+  paymentLastCheckedAt DateTime?
+  paymentError String?
+  asaasCustomerId String?
+  asaasInstallmentId String? @unique
+  paymentDueDate DateTime?
+  paymentReview Boolean @default(false)
+  tinyOrderId String? @unique
+  tinyExportStatus String @default("PENDING")
+  tinyExportAttemptedAt DateTime?
+  tinyExportError String?
+  tinyExportedAt DateTime?
+  tinyStockAcknowledgedAt DateTime?
+  tinyStockAcknowledgement String?
+  tinyStockReconciledAt DateTime?
+  shippingQuote Json?
+  shippingCartCost Float?
+  shippingProviderData Json?
+  shippingIntegrationStatus String @default("NONE")
+  melhorEnvioIds String[] @default([])
+  shippingLastError String?
+  shippingAttemptedAt DateTime?
+  shippingInvoiceKey String?
+  shippingPrintUrl String?
+  stockReleased  Boolean     @default(false)
+  userId         String?
+  user           User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  customerName   String
+  customerEmail  String
+  customerPhone  String
+  customerCpf    String
+  shippingCep    String
+  shippingStreet String
+  shippingNum    String
+  shippingComp   String?
+  shippingDist   String
+  shippingCity   String
+  shippingState  String
+  subtotal       Float
+  shippingCost   Float       @default(0)
+  shippingMethod String?
+  discount       Float       @default(0)
+  total          Float
+  paymentMethod  String      // PIX, CREDIT_CARD
+  paymentStatus  String      @default("PENDING") // PENDING, PAID, CANCELLED, REFUNDED
+  asaasPaymentId String?     @unique
+  pixQrCode      String?     @db.Text
+  pixCopiaECola  String?     @db.Text
+  pixExpiresAt   DateTime?
+  cardLastFour   String?
+  cardBrand      String?
+  installments   Int         @default(1)
+  trackingCode   String?
+  trackingUrl    String?
+  notes          String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  items          OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  sku       String?
+  tinyId    String?
+  product   Product? @relation(fields: [productId], references: [id])
+  name      String
+  price     Float
+  quantity  Int
+  image     String?
+  createdAt DateTime @default(now())
+
+  @@map("order_items")
+}
+
+model WebhookLog {
+  id        String   @id @default(uuid())
+  event     String
+  payload   String   @db.Text
+  status    String   // PROCESSED, IGNORED, ERROR
+  message   String?
+  createdAt DateTime @default(now())
+
+  @@map("webhook_logs")
+}
+
+model SyncLog {
+  id          String    @id @default(uuid())
+  source      String    @default("TINY")
+  status      String    // SUCCESS, PARTIAL, ERROR
+  itemsSynced Int       @default(0)
+  itemsFailed Int       @default(0)
+  message     String?   @db.Text
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@map("sync_logs")
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}

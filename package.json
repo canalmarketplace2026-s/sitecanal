@@ -1,0 +1,38 @@
+{
+  "name": "canal-marketplace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Canal Marketplace - Loja Oficial Next.js + PostgreSQL",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start -p 3000",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:deploy": "prisma migrate deploy",
+    "seed": "node scripts/seed.js",
+    "sync:tiny": "node scripts/sync-tiny.js",
+    "worker": "node scripts/cron-worker.js",
+    "test": "node --experimental-vm-modules --test tests/*.test.cjs",
+    "check:config": "node scripts/check-config.cjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.21.1",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "jsonwebtoken": "^9.0.2",
+    "next": "15.5.28",
+    "node-cron": "4.6.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "prisma": "^5.21.1"
+  },
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
+  }
+}
