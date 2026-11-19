@@ -12,8 +12,8 @@ export default function CoraBot() {
 
   const quickAnswers = [
     { label: '📦 Rastrear meu pedido', action: () => { window.location.href = '/rastrear'; } },
-    { label: '⚡ Como funciona o Pix com 10% OFF?', reply: 'Comprando no Pix, o desconto de 10% é aplicado automaticamente no carrinho e a confirmação é imediata!' },
-    { label: '🚚 Qual o prazo de entrega?', reply: 'Enviamos todos os pedidos em até 24 horas úteis via Jadlog ou Correios com seguro total!' },
+    { label: '⚡ Como funciona o Pix com 10% OFF?', reply: 'Comprando no Pix, o desconto de 10% é aplicado automaticamente no carrinho e o pedido é atualizado quando o Asaas confirma o pagamento.' },
+    { label: '🚚 Qual o prazo de entrega?', reply: 'Calcule o frete com seu CEP. O prazo e as transportadoras disponíveis aparecem antes de finalizar a compra.' },
     { label: '💬 Falar no WhatsApp Oficial', action: () => { window.open('https://wa.me/5519992893859?text=Ol%C3%A1%2C%20Cora!%20Gostaria%20de%20ajuda%20com%20um%20pedido.', '_blank'); } },
   ];
 
@@ -30,7 +30,7 @@ export default function CoraBot() {
       let reply = 'Posso te conectar diretamente com nossa equipe de especialistas pelo WhatsApp (19) 99289-3859 para te atender agora mesmo!';
 
       if (lower.includes('frete') || lower.includes('entrega')) {
-        reply = 'Oferecemos Frete Grátis para todo o Brasil em compras acima de R$ 199! Você também pode simular o frete direto na página de cada produto.';
+        reply = 'Você pode simular o frete com seu CEP na página do produto ou na finalização da compra. As opções vêm do Melhor Envio.';
       } else if (lower.includes('pix') || lower.includes('pagamento') || lower.includes('cartao') || lower.includes('cartão')) {
         reply = 'Aceitamos Pix com 10% de desconto imediato ou cartão de crédito em até 12x sem juros!';
       } else if (lower.includes('rastre') || lower.includes('onde esta') || lower.includes('pedido')) {
@@ -57,8 +57,8 @@ export default function CoraBot() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="cora-chat-box">
-          <div className="cora-chat-header">
+        <div className="cora-chat-modal open">
+          <div className="chat-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <img src="/imgs/cora/1.png" alt="Cora" style={{ width: '32px', height: '32px' }} />
               <div>
@@ -74,7 +74,7 @@ export default function CoraBot() {
             </button>
           </div>
 
-          <div className="cora-chat-body">
+          <div className="chat-body">
             {messages.map((m, idx) => (
               <div key={idx} className={`cora-msg-row ${m.sender === 'user' ? 'cora-msg-user' : 'cora-msg-bot'}`}>
                 {m.sender === 'bot' && (
@@ -98,7 +98,7 @@ export default function CoraBot() {
                       ]);
                     }
                   }}
-                  className="cora-quick-btn"
+                  className="chat-chip"
                 >
                   {qa.label}
                 </button>
@@ -112,9 +112,9 @@ export default function CoraBot() {
               placeholder="Digite sua dúvida..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="cora-chat-input"
+              className="chat-input"
             />
-            <button type="submit" className="cora-chat-send-btn">
+            <button type="submit" className="chat-send-btn">
               Enviar
             </button>
           </form>

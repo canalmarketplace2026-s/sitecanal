@@ -7,17 +7,11 @@ import CoraBot from '../components/CoraBot';
 
 export default function Carrinho() {
   const [items, setItems] = useState([]);
-  const [coupon, setCoupon] = useState('');
-  const [discountPercent, setDiscountPercent] = useState(0);
 
   const loadCart = () => {
     try {
       const saved = JSON.parse(localStorage.getItem('cm.cart') || '[]');
       setItems(saved);
-      const appliedCoupon = localStorage.getItem('cm.coupon');
-      if (appliedCoupon === 'CANAL10' || appliedCoupon === 'CORA10') {
-        setDiscountPercent(10);
-      }
     } catch (e) {
       setItems([]);
     }
@@ -29,11 +23,12 @@ export default function Carrinho() {
 
   const updateQuantity = (idx, delta) => {
     const updated = [...items];
-    const newQty = (updated[idx].qty || 1) + delta;
+    const newQty = (updated[idx].qty || updated[idx].quantity || 1) + delta;
     if (newQty <= 0) {
       updated.splice(idx, 1);
     } else {
-      updated[idx].qty = newQty;
+      updated[idx].qty = Math.min(newQty, 100);
+      updated[idx].quantity = updated[idx].qty;
     }
     setItems(updated);
     localStorage.setItem('cm.cart', JSON.stringify(updated));
@@ -48,21 +43,9 @@ export default function Carrinho() {
     window.dispatchEvent(new Event('cart-updated'));
   };
 
-  const applyCoupon = () => {
-    const clean = coupon.trim().toUpperCase();
-    if (clean === 'CANAL10' || clean === 'CORA10') {
-      localStorage.setItem('cm.coupon', clean);
-      setDiscountPercent(10);
-      alert(`🎉 Cupom ${clean} aplicado! 10% de desconto.`);
-    } else {
-      alert('Cupom inválido. Use CANAL10 ou CORA10.');
-    }
-  };
 
   const subtotal = items.reduce((acc, it) => acc + (parseFloat(it.price) * (it.qty || 1)), 0);
-  const discount = (subtotal * discountPercent) / 100;
-  const total = Math.max(subtotal - discount, 0);
-  const isFreeShipping = subtotal >= 199;
+  const total = subtotal;
 
   return (
     <>
@@ -92,7 +75,7 @@ export default function Carrinho() {
               </Link>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '32px' }}>
               {/* Items List */}
               <div style={{ background: '#FFF', borderRadius: '16px', border: '1px solid #E2E8F0', padding: '24px' }}>
                 {items.map((it, idx) => (
@@ -124,18 +107,7 @@ export default function Carrinho() {
                   Resumo do Pedido
                 </h3>
 
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                  <input
-                    type="text"
-                    placeholder="Cupom de desconto"
-                    value={coupon}
-                    onChange={(e) => setCoupon(e.target.value)}
-                    style={{ flex: 1, padding: '10px 12px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '13px' }}
-                  />
-                  <button onClick={applyCoupon} style={{ padding: '10px 16px', background: '#0F253C', color: '#FFF', border: 'none', borderRadius: '6px', fontWeight: 700, cursor: 'pointer' }}>
-                    Aplicar
-                  </button>
-                </div>
+
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#64748B', marginBottom: '8px' }}>
                   <span>Subtotal</span>
@@ -144,15 +116,10 @@ export default function Carrinho() {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#64748B', marginBottom: '8px' }}>
                   <span>Frete estimado</span>
-                  <span>{isFreeShipping ? <strong style={{ color: '#059669' }}>Grátis (acima de R$ 199)</strong> : 'Calculado no checkout'}</span>
+                  <span>Calculado no checkout</span>
                 </div>
 
-                {discount > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#059669', fontWeight: 700, marginBottom: '8px' }}>
-                    <span>Desconto cupom</span>
-                    <span>- R$ {discount.toFixed(2).replace('.', ',')}</span>
-                  </div>
-                )}
+
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '20px', fontWeight: 900, color: '#0F253C', margin: '16px 0', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
                   <span>Total</span>

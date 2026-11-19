@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CartDrawer from '../components/CartDrawer';
 import CoraBot from '../components/CoraBot';
+import ProductCard from '../components/ProductCard';
 
 export default function Favoritos() {
   const [favorites, setFavorites] = useState([]);
@@ -78,37 +79,7 @@ export default function Favoritos() {
             </div>
           ) : (
             <div className="product-grid">
-              {favorites.map((p) => (
-                <div key={p.slug} className="product-card">
-                  <Link href={`/produto/${p.slug}`} className="product-img-wrap">
-                    <img src={p.image || '/imgs/canaltop.png'} alt={p.name} className="product-thumb-img" />
-                  </Link>
-                  <div className="product-info-box">
-                    <h3 className="product-card-title">
-                      <Link href={`/produto/${p.slug}`}>{p.name}</Link>
-                    </h3>
-                    <div className="product-current-price">
-                      R$ {p.price.toFixed(2).replace('.', ',')}
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                      <button
-                        onClick={() => addToCart(p)}
-                        className="product-add-cart-btn"
-                        style={{ flex: 1 }}
-                      >
-                        Comprar
-                      </button>
-                      <button
-                        onClick={() => removeFavorite(p.slug)}
-                        style={{ padding: '10px 14px', border: '1px solid #CBD5E1', borderRadius: '8px', background: '#FFF', cursor: 'pointer' }}
-                        title="Remover dos favoritos"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              {favorites.map((p) => <ProductCard key={p.id || p.slug} product={p} onAdd={addToCart} />)}
             </div>
           )}
         </div>

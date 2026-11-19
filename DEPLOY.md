@@ -1,48 +1,22 @@
-# Canal — catálogo oficial do Tiny
+# Publicação da Canal
 
-Esta versão substitui o catálogo fictício. Envie o CONTEÚDO desta pasta à raiz do repositório sitecanal. Não envie senhas, .env, pasta private, documentos de acesso, node_modules ou .next.
+## Atualização no servidor existente
 
-## Catálogo e estoque
+1. Use o repositório canalmarketplace2026-s/sitecanal, branch main. O vínculo do deploy automático precisa ser confirmado com a hospedagem; um push isolado não comprova publicação.
+2. Preserve /home/dev/app.env e o banco existente. Não execute reset nem o seed novamente para atualizar banners ou layout.
+3. Prepare a nova versão em uma pasta separada; mantenha o aplicativo atual atendendo durante a compilação. Use as mesmas dependências do package-lock.json e copie a configuração privada para .env com permissão 600.
+4. Execute npm ci e npm run build. Se falhar, não troque a versão em execução.
+5. Após compilar, ative a nova versão em /home/dev/app e reinicie somente os processos PM2 site e tiny-sync. Preserve a versão anterior para reversão. Execute pm2 save.
+6. Confira os dois domínios, catálogo, imagens, checkout, conta e painel. Os testes automatizados usam provedores simulados; a compra de validação do responsável conclui a verificação do fluxo real.
 
-- A base inicial contém 2.872 registros reais consultados no Tiny da Canal, sem custos de compra ou dados internos de fornecedor. O Tiny passa a ser o único cadastro oficial.
-- O seed desativa os produtos do catálogo anterior e importa registros identificados por tinyId, sem apagar pedidos. Se produtos antigos tiverem reservas, a migração é interrompida para conciliação.
-- Produtos-pai de variações não são vendidos como itens individuais. As variações com ID próprio são importadas separadamente. Produtos inativos, excluídos, sem preço válido ou ausentes numa consulta completa deixam de ser vendidos.
-- O preço promocional do Tiny é usado somente quando é positivo e menor que o preço normal. Não se inventam promoções, avaliações ou quantidades.
-- O catálogo inteiro é consultado em todas as páginas. Detalhes, fotos, marca, categoria e medidas reais são atualizados em lotes. O lote padrão é 75 produtos por ciclo de 15 min, respeitando cerca de 30 consultas/min. Na primeira carga, enriquecer milhares de registros pode levar várias horas.
-- Saldos não vêm da lista geral de produtos: exigem consulta específica. O site começa com saldo zero até obter uma resposta válida; não usa as quantidades fictícias antigas. Durante cotação/checkout, consulta os itens do carrinho quando necessário. Se o ERP estiver indisponível ou ocupado com a sincronização, pede nova tentativa sem inventar saldo.
-- Os campos de reserva local nunca são sobrescritos pela importação. A reserva após exportação ao Tiny depende de confirmação administrativa da baixa e sincronização posterior.
-- Fotos ausentes aparecem como imagem não cadastrada. Medidas/peso ausentes impedem cotação do item até serem preenchidos no Tiny. Essa configuração cadastral precisa existir no ERP.
-- Edite produtos diretamente no Tiny. A página /admin/catalogo consulta o espelho; não substitui o cadastro oficial.
+## Credenciais e opções
 
-## Instalação no servidor
+O .env.example é um modelo bloqueado e sem segredos, adequado a instalações novas. Na loja existente a configuração de produção já foi habilitada por solicitação do usuário. Preserve os valores efetivos de CHECKOUT_ENABLED, TINY_ENVIAR_PEDIDOS e SHIPPING_PURCHASE_ENABLED em /home/dev/app.env. Nunca coloque esse arquivo no Git.
 
-O endereço anterior respondeu 404; confirmar acesso com a equipe. O proprietário envia ao GitHub. A equipe precisa conferir o remoto/branch no servidor, copiar a configuração privada ao .env, instalar dependências, aplicar migrations, importar o catálogo e iniciar o site e worker.
+## Instalação nova
 
-Para banco VAZIO:
+Somente em banco novo/vazio: configurar o ambiente, instalar dependências, executar prisma migrate deploy e o seed oficial do Tiny, compilar e iniciar ecosystem.config.cjs. Bancos com tabelas exigem revisão do histórico de migrations. Não utilizar prisma migrate reset em produção.
 
-```sh
-cd /home/dev/app
-npm ci
-npm run prisma:deploy
-npm run seed
-npm test
-npm run build
-pm2 start ecosystem.config.cjs
-pm2 save
-```
+## Operação
 
-Se o banco já possuir tabelas, NÃO aplicar a migration inicial sem revisar o histórico/schema e preparar baseline. Não executar reset. O comando seed é responsável por trocar o catálogo anterior pelo oficial, preservando registros de pedidos.
-
-Configure as variáveis do .env.example no servidor. A configuração privada preparada fica FORA do pacote público, em Canal-publicacao/private/canal-servidor.env. Nunca enviá-la ao GitHub. Ajuste TINY_DETAIL_BATCH_SIZE apenas se precisar diminuir o lote (limite máximo 100); a aplicação mantém o intervalo de API.
-
-## Pagamento e envio
-
-Asaas Pix/cartão hospedado e parcelamento, webhook autenticado e recuperação de respostas ambíguas estão implementados. Falta a chave Asaas e homologar no ambiente correto. Manter CHECKOUT_ENABLED=false enquanto isso.
-
-Melhor Envio cota os produtos reais com medidas vindas do Tiny. O painel administrativo permite preparar/comprar/gerar/imprimir etiquetas e consultar rastreio. Exige remetente fiscal completo e NF-e; compra depende de confirmação explícita e SHIPPING_PURCHASE_ENABLED.
-
-TINY_ENVIAR_PEDIDOS fica false até a homologação. Quando habilitado, o worker exporta pedidos pagos com referência persistida; resposta ambígua exige recuperação/conferência, nunca repetição cega. Nenhuma alteração foi feita no estoque do Tiny durante a preparação; somente consultas de leitura.
-
-## Validação e limites
-
-64 testes locais passaram com banco/provedores simulados. A compilação precisa passar antes da entrega. Não houve execução de migration nem importação no banco do servidor, cobrança real ou compra de etiqueta. Essa etapa exige acesso ao servidor e testes com as contas correspondentes. BR e Drogaria não foram alteradas.
+Produtos são editados no Tiny. O saldo do site desconta reservas locais. Após o envio do pedido ao ERP, a baixa precisa ser confirmada administrativamente e seguida por uma sincronização antes da liberação da reserva. Etiquetas exigem NF-e válida; serviços que exigem agência/CNAE ou XML precisam dos dados correspondentes, ou devem ser tratados diretamente no Melhor Envio.

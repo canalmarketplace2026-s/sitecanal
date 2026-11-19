@@ -6,6 +6,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import CartDrawer from '../components/CartDrawer';
 import CoraBot from '../components/CoraBot';
+import ProductCard from '../components/ProductCard';
 
 export default function Loja() {
   const router = useRouter();
@@ -175,47 +176,7 @@ export default function Loja() {
             </div>
           ) : (
             <div className="product-grid">
-              {products.map((p) => {
-                const pixPrice = p.price * 0.9;
-                return (
-                  <div key={p.id || p.slug} className="product-card">
-                    {p.badge && <span className="product-badge">{p.badge}</span>}
-                    {p.freteGratis && <span className="product-free-ship-tag">Frete Grátis</span>}
-
-                    <Link href={`/produto/${p.slug}`} className="product-img-wrap">
-                      <img src={p.image || '/imgs/canaltop.png'} alt={p.name} className="product-thumb-img" />
-                    </Link>
-
-                    <div className="product-info-box">
-                      <span className="product-brand-tag">{p.brand || 'Canal Distribuidora'}</span>
-                      <h3 className="product-card-title">
-                        <Link href={`/produto/${p.slug}`}>{p.name}</Link>
-                      </h3>
-
-                      <div className="product-price-box">
-                        {p.oldPrice && <span className="product-old-price">R$ {p.oldPrice.toFixed(2).replace('.', ',')}</span>}
-                        <div className="product-current-price">
-                          R$ {p.price.toFixed(2).replace('.', ',')}
-                        </div>
-                        <div className="product-pix-price">
-                          ⚡ R$ {pixPrice.toFixed(2).replace('.', ',')} no Pix (10% off)
-                        </div>
-                        <div className="product-installments">
-                          em até 12x de R$ {(p.price / 12).toFixed(2).replace('.', ',')} sem juros
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        className="product-add-cart-btn"
-                        onClick={() => addToCart(p)}
-                      >
-                        Adicionar à Sacola
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {products.map((p) => <ProductCard key={p.id} product={p} onAdd={addToCart} />)}
             </div>
           )}
         </div>

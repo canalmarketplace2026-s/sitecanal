@@ -1,5 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const {baseProduct,detailProduct,priceOf,readCatalog,applyCatalog,refreshCartStock}=require('../lib/tiny-catalog.cjs');
+const {syncCatalog}=require('../lib/tiny-catalog.cjs');
 test('official catalog uses Tiny identities and actual promotional price, never local sequence',()=>{
  const p=baseProduct({id:'123',nome:'Real',codigo:'DUP',preco:100,preco_promocional:80,situacao:'A'},new Map([['DUP',2]]));
  assert.equal(p.slug,'tiny-123');assert.equal(p.tinyId,'123');assert.equal(p.price,80);assert.equal(p.sku,null);assert.equal(p.active,true);
@@ -25,4 +26,23 @@ test('authoritative import deactivates old fictitious products, upserts real Tin
 test('cart stock refresh preserves prior data on API failure and never invents saldo',async()=>{
  let writes=0;const db={product:{findMany:async()=>[{id:'p',tinyId:'123'}],update:async()=>writes++},$transaction:async fn=>fn({$queryRawUnsafe:async()=>[{locked:true}]})};
  await assert.rejects(refreshCartStock(db,[{id:'p'}],{client:{productDetail:async()=>{throw new Error('offline');},stock:async()=>100}}));assert.equal(writes,0);
+});
+
+test('background importer yields to a waiting cart without remote calls or catalog writes',async()=>{
+ let calls=0;
+ const db={setting:{findUnique:async()=>({value:String(Date.now()+60000)})},$transaction:async fn=>fn({$queryRawUnsafe:async()=>[{locked:true}]})};
+ const result=await syncCatalog(db,{client:{productsPage:async()=>{calls++;throw Error('must not call');}}});
+ assert.equal(result.yieldedToCart,true);assert.equal(calls,0);
+});
+test('cart waits for the importer then obtains real stock without changing reservations',async()=>{
+ let locked=false,waits=0,clock=1000,written;
+ const db={setting:{upsert:async q=>assert.equal(q.where.key,'tiny_cart_priority_until')},product:{findMany:async()=>[{id:'p',tinyId:'123'}],update:async q=>{written=q.data;}},$transaction:async fn=>fn({$queryRawUnsafe:async()=>[{locked}]})};
+ await refreshCartStock(db,[{id:'p'}],{now:()=>clock,wait:async ms=>{waits++;clock+=ms;locked=true;},client:{productDetail:async()=>({nome:'Real',preco:10,situacao:'A'}),stock:async()=>3}});
+ assert.equal(waits,1);assert.equal(written.stock,3);assert.equal(written.reservedStock,undefined);
+});
+test('cart never bypasses the API lock when the importer does not release it',async()=>{
+ let clock=1000,calls=0,writes=0;
+ const db={setting:{upsert:async()=>{}},product:{findMany:async()=>[{id:'p',tinyId:'123'}],update:async()=>writes++},$transaction:async fn=>fn({$queryRawUnsafe:async()=>[{locked:false}]})};
+ await assert.rejects(refreshCartStock(db,[{id:'p'}],{now:()=>clock,wait:async ms=>{clock+=ms;},lockWaitMs:500,client:{productDetail:async()=>calls++,stock:async()=>calls++}}));
+ assert.equal(calls,0);assert.equal(writes,0);
 });

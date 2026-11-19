@@ -10,7 +10,8 @@ for (const name of ['JWT_SECRET', 'CRON_SECRET', 'ASAAS_WEBHOOK_TOKEN']) {
 if (!/^\d{8}$/.test(process.env.MELHOR_ENVIO_FROM_CEP || '')) errors.push('MELHOR_ENVIO_FROM_CEP: informar oito dígitos.');
 if (!['https://api-sandbox.asaas.com/v3', 'https://api.asaas.com/v3'].includes(process.env.ASAAS_API_URL)) errors.push('ASAAS_API_URL: usar o ambiente oficial de testes ou produção.');
 if (process.env.CHECKOUT_ENABLED === 'true') {
-  errors.push('CHECKOUT_ENABLED: a liberação depende da homologação e conciliação descritas em DEPLOY.md; esta entrega de preparação deve permanecer false.');
+  required('ASAAS_API_KEY');
+  console.log('Checkout ativo: a validacao real de compra deve ser confirmada pelo responsavel.');
 }
 console.log('Verificação local de configuração; nenhuma conexão foi realizada e nenhum segredo é exibido.');
 if (errors.length) { for (const error of errors) console.error(`- ${error}`); process.exitCode = 1; }

@@ -1,48 +1,23 @@
-# Canal — catálogo oficial do Tiny
+# Canal Marketplace — publicação
 
-Esta versão substitui o catálogo fictício. Envie o CONTEÚDO desta pasta à raiz do repositório sitecanal. Não envie senhas, .env, pasta private, documentos de acesso, node_modules ou .next.
+Loja Next.js integrada ao Tiny/Olist, Asaas e Melhor Envio. O layout retoma a base aprovada em D:/@SITES/sp/canal, com os banners oficiais para computador e celular.
 
-## Catálogo e estoque
+## Fonte oficial dos produtos
 
-- A base inicial contém 2.872 registros reais consultados no Tiny da Canal, sem custos de compra ou dados internos de fornecedor. O Tiny passa a ser o único cadastro oficial.
-- O seed desativa os produtos do catálogo anterior e importa registros identificados por tinyId, sem apagar pedidos. Se produtos antigos tiverem reservas, a migração é interrompida para conciliação.
-- Produtos-pai de variações não são vendidos como itens individuais. As variações com ID próprio são importadas separadamente. Produtos inativos, excluídos, sem preço válido ou ausentes numa consulta completa deixam de ser vendidos.
-- O preço promocional do Tiny é usado somente quando é positivo e menor que o preço normal. Não se inventam promoções, avaliações ou quantidades.
-- O catálogo inteiro é consultado em todas as páginas. Detalhes, fotos, marca, categoria e medidas reais são atualizados em lotes. O lote padrão é 75 produtos por ciclo de 15 min, respeitando cerca de 30 consultas/min. Na primeira carga, enriquecer milhares de registros pode levar várias horas.
-- Saldos não vêm da lista geral de produtos: exigem consulta específica. O site começa com saldo zero até obter uma resposta válida; não usa as quantidades fictícias antigas. Durante cotação/checkout, consulta os itens do carrinho quando necessário. Se o ERP estiver indisponível ou ocupado com a sincronização, pede nova tentativa sem inventar saldo.
-- Os campos de reserva local nunca são sobrescritos pela importação. A reserva após exportação ao Tiny depende de confirmação administrativa da baixa e sincronização posterior.
-- Fotos ausentes aparecem como imagem não cadastrada. Medidas/peso ausentes impedem cotação do item até serem preenchidos no Tiny. Essa configuração cadastral precisa existir no ERP.
-- Edite produtos diretamente no Tiny. A página /admin/catalogo consulta o espelho; não substitui o cadastro oficial.
-
-## Instalação no servidor
-
-O endereço anterior respondeu 404; confirmar acesso com a equipe. O proprietário envia ao GitHub. A equipe precisa conferir o remoto/branch no servidor, copiar a configuração privada ao .env, instalar dependências, aplicar migrations, importar o catálogo e iniciar o site e worker.
-
-Para banco VAZIO:
-
-```sh
-cd /home/dev/app
-npm ci
-npm run prisma:deploy
-npm run seed
-npm test
-npm run build
-pm2 start ecosystem.config.cjs
-pm2 save
-```
-
-Se o banco já possuir tabelas, NÃO aplicar a migration inicial sem revisar o histórico/schema e preparar baseline. Não executar reset. O comando seed é responsável por trocar o catálogo anterior pelo oficial, preservando registros de pedidos.
-
-Configure as variáveis do .env.example no servidor. A configuração privada preparada fica FORA do pacote público, em Canal-publicacao/private/canal-servidor.env. Nunca enviá-la ao GitHub. Ajuste TINY_DETAIL_BATCH_SIZE apenas se precisar diminuir o lote (limite máximo 100); a aplicação mantém o intervalo de API.
+O catálogo, os preços, o saldo, as imagens e as medidas vêm do Tiny. Produtos fictícios não são usados pela aplicação. Itens sem disponibilidade ou medidas confirmadas não podem ser vendidos com saldo ou frete inventados. A sincronização automática roda a cada 15 minutos e preserva reservas de pedidos.
 
 ## Pagamento e envio
 
-Asaas Pix/cartão hospedado e parcelamento, webhook autenticado e recuperação de respostas ambíguas estão implementados. Falta a chave Asaas e homologar no ambiente correto. Manter CHECKOUT_ENABLED=false enquanto isso.
+O checkout usa Pix e cartão hospedados no Asaas. O webhook autentica as notificações e consulta a cobrança antes de atualizar o pedido. Pedidos pagos são exportados ao Tiny quando TINY_ENVIAR_PEDIDOS está ativo. O administrador precisa confirmar a baixa efetiva no Tiny antes de reconciliar reservas locais; a criação do pedido no ERP não equivale à baixa física.
 
-Melhor Envio cota os produtos reais com medidas vindas do Tiny. O painel administrativo permite preparar/comprar/gerar/imprimir etiquetas e consultar rastreio. Exige remetente fiscal completo e NF-e; compra depende de confirmação explícita e SHIPPING_PURCHASE_ENABLED.
+O Melhor Envio calcula o frete com a origem CEP 13059-640 e medidas reais. A compra de etiquetas exige conta administrativa, pedido pago, dados fiscais, chave da NF-e e confirmação do custo. O frete grátis está desativado. Os cupons antigos que existiam apenas no navegador foram removidos da sacola.
 
-TINY_ENVIAR_PEDIDOS fica false até a homologação. Quando habilitado, o worker exporta pedidos pagos com referência persistida; resposta ambígua exige recuperação/conferência, nunca repetição cega. Nenhuma alteração foi feita no estoque do Tiny durante a preparação; somente consultas de leitura.
+## Configuração privada
 
-## Validação e limites
+Nunca envie .env, private, senhas, chaves ou documentos de acesso ao GitHub. No servidor existente, /home/dev/app.env guarda a configuração persistente. O .env.example contém apenas um modelo sem credenciais; não substitua a configuração real por ele.
 
-64 testes locais passaram com banco/provedores simulados. A compilação precisa passar antes da entrega. Não houve execução de migration nem importação no banco do servidor, cobrança real ou compra de etiqueta. Essa etapa exige acesso ao servidor e testes com as contas correspondentes. BR e Drogaria não foram alteradas.
+## Estado da entrega
+
+O domínio principal e www estão ligados ao túnel site-canal. Produção foi habilitada por solicitação do responsável, que fará a compra de validação antes da divulgação. CHECKOUT_ENABLED, TINY_ENVIAR_PEDIDOS e SHIPPING_PURCHASE_ENABLED estão ativos no servidor. Isso não significa que um pagamento completo já foi homologado: nenhuma cobrança ou etiqueta foi comprada pelo assistente.
+
+Leia DEPLOY.md para publicar e PENDENCIAS.md para os pontos que dependem da compra do responsável. BR e Drogaria não fazem parte desta entrega.
